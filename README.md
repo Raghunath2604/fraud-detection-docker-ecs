@@ -45,20 +45,16 @@ JSON Response
 
 ## 🎯 Live Demo
 
-**API is now live on AWS!**
-
-- 🌐 **API Endpoint:** http://fraud-api-alb-1872682528.us-east-1.elb.amazonaws.com
-- 📚 **Swagger UI:** http://fraud-api-alb-1872682528.us-east-1.elb.amazonaws.com/docs
-- 🏥 **Health Check:** http://fraud-api-alb-1872682528.us-east-1.elb.amazonaws.com/health
+**API deployed on AWS ECS!** (Endpoint URL available upon request for security)
 
 ### Test the API
 
 ```bash
 # Health check
-curl http://fraud-api-alb-1872682528.us-east-1.elb.amazonaws.com/health
+curl http://<YOUR_ALB_ENDPOINT>/health
 
 # Make a prediction
-curl -X POST http://fraud-api-alb-1872682528.us-east-1.elb.amazonaws.com/predict \
+curl -X POST http://<YOUR_ALB_ENDPOINT>/predict \
   -H "Content-Type: application/json" \
   -d '{
     "amount": 2500,
@@ -72,6 +68,9 @@ curl -X POST http://fraud-api-alb-1872682528.us-east-1.elb.amazonaws.com/predict
   "fraud_prediction": 1  # 1 = Fraud, 0 = Legitimate
 }
 ```
+
+**Note:** Replace `<YOUR_ALB_ENDPOINT>` with your own AWS ALB endpoint after deployment.
+See [IMPLEMENTATION.md](IMPLEMENTATION.md) for deployment instructions.
 
 ## 📁 Project Structure
 

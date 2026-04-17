@@ -66,3 +66,41 @@ Thumbs.db
 # Temporary files
 *.tmp
 temp/
+
+# Sensitive files - NEVER commit
+.env
+.env.local
+.env.*.local
+secrets.json
+credentials.json
+aws_credentials
+.aws/credentials
+.aws/config
+
+# AWS specific
+*.pem
+*.key
+credentials
+ECR_PASSWORD
+
+# Secrets from various tools
+.vault-token
+.htpasswd
+.passwd
+
+# API keys and tokens
+API_KEY
+SECRET_KEY
+PRIVATE_KEY
+TOKEN
+ACCESS_TOKEN
+
+# Database
+*.db
+*.sqlite3
+*.sqlite
+
+# SSL certificates
+*.crt
+*.cert
+*.pem
