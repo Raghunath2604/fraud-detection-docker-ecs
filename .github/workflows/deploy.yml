@@ -22,13 +22,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v2
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
+
+      - name: Verify AWS Access
+        run: |
+          echo "Verifying AWS access..."
+          aws sts get-caller-identity
+          echo "AWS access verified!"
 
       - name: Login to Amazon ECR
         id: login-ecr

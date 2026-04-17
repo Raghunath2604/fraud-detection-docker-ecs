@@ -307,4 +307,4 @@ def predict(data: Transaction):
 
 @app.get("/health")
 def health():
-    return {"status": "healthy", "version": "1.3-final", "cicd": "automated"}
+    return {"status": "healthy", "version": "1.4-ghactions-fixed", "cicd": "automated"}
