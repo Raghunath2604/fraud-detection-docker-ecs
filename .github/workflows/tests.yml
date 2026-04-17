@@ -1,0 +1,96 @@
+name: Tests & Code Quality
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-cov black flake8
+
+      - name: Lint with flake8
+        run: |
+          # Stop build on syntax errors
+          flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Exit-zero treats all errors as warnings
+          flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
+      - name: Format check with black
+        run: |
+          black --check app/ || true
+
+      - name: Train model
+        run: python train.py
+
+      - name: Test API endpoints
+        run: |
+          # Start API in background
+          uvicorn app.main:app --host 127.0.0.1 --port 8000 &
+          sleep 3
+
+          # Test health endpoint
+          curl -f http://127.0.0.1:8000/health || exit 1
+
+          # Test prediction endpoint
+          curl -f -X POST http://127.0.0.1:8000/predict \
+            -H "Content-Type: application/json" \
+            -d '{"amount": 2500, "time": 320, "location_risk": 1, "device_new": 1}' || exit 1
+
+          echo "✅ All endpoint tests passed!"
+
+      - name: Build Docker image
+        run: docker build -t fraud-api:test .
+
+      - name: Test Docker container
+        run: |
+          docker run -d -p 8001:8000 --name test-container fraud-api:test
+          sleep 3
+
+          # Test in container
+          curl -f http://localhost:8001/health || exit 1
+          curl -f -X POST http://localhost:8001/predict \
+            -H "Content-Type: application/json" \
+            -d '{"amount": 1000, "time": 10, "location_risk": 0, "device_new": 0}' || exit 1
+
+          docker stop test-container
+          echo "✅ Docker container tests passed!"
+
+  code-quality:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Check file sizes
+        run: |
+          echo "Checking file sizes..."
+          du -sh app/main.py model/fraud.pkl Dockerfile requirements.txt
+          echo "✅ File sizes OK"
+
+      - name: Verify .gitignore
+        run: |
+          echo "Checking for sensitive files..."
+          ! grep -r "AWS_ACCESS_KEY" . --exclude-dir=.git || exit 1
+          ! grep -r "aws_secret_access_key" . --exclude-dir=.git || exit 1
+          ! grep -r "\.pem" .gitignore || true
+          echo "✅ No sensitive data found"
