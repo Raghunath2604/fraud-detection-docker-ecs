@@ -4,12 +4,13 @@ A production-ready machine learning API that detects fraudulent transactions in 
 
 ## 🎯 Features
 
-- ⚡ **Real-time Fraud Detection** - Fast predictions using pre-trained ML model
+- ⚡ **Real-time Fraud Detection** - Fast predictions using pre-trained ML model (92.7% accuracy)
+- 🎨 **Interactive UI** - Web-based fraud detection form with instant results
 - 🐳 **Dockerized** - Containerized for consistent deployment
-- ☁️ **Cloud Ready** - Deployed on AWS ECS with load balancing
-- 📊 **Scalable** - Auto-scaling with Fargate tasks
+- ☁️ **Cloud Deployed** - Live on AWS ECS with Application Load Balancer
+- 📊 **Scalable** - 2 Fargate tasks for high availability
 - 📚 **API Docs** - Interactive Swagger/OpenAPI documentation
-- 🚀 **Production Grade** - High availability and monitoring
+- 🚀 **Production Grade** - CI/CD pipeline with GitHub Actions
 
 ## 🛠 Tech Stack
 
@@ -52,6 +53,18 @@ uvicorn app.main:app --reload
 
 Access at: `http://127.0.0.1:8000/docs`
 
+### Live Demo (AWS)
+
+**Interactive UI:** Visit the live fraud detection form
+```
+http://fraud-api-alb-1872682528.us-east-1.elb.amazonaws.com/
+```
+
+**Features:**
+- Enter transaction details (amount, time, location risk, device status)
+- Get instant fraud prediction with color-coded results
+- Real-time analysis using 92.7% accurate ML model
+
 ### Docker
 
 **Build:**
@@ -69,24 +82,38 @@ docker run -p 8000:8000 fraud-api
 ```
 fraud-detection-docker-ecs/
 ├── app/
-│   └── main.py              # FastAPI application
+│   └── main.py                          # FastAPI with interactive UI
 ├── model/
-│   └── fraud.pkl            # Pre-trained model (92.7% accuracy)
-├── train.py                 # Model training
-├── Dockerfile               # Docker config
-├── requirements.txt         # Dependencies
-├── docker-compose.yml       # Local compose
-└── README.md               # This file
+│   └── fraud.pkl                        # Pre-trained RandomForest (92.7% accuracy)
+├── .github/workflows/
+│   ├── tests.yml                        # Run tests on every push
+│   └── deploy.yml                       # Deploy to ECS on push to main
+├── train.py                             # Model training script
+├── Dockerfile                           # Container configuration
+├── requirements.txt                     # Python dependencies
+├── docker-compose.yml                   # Local development setup
+└── README.md                            # This file
 ```
 
 ## 🔗 API Endpoints
+
+### GET `/`
+Interactive web UI for fraud detection.
+
+**Features:**
+- Beautiful purple gradient UI
+- Form inputs for transaction details
+- Real-time predictions
+- Color-coded results (green = legitimate, red = fraud)
+- Error handling and loading states
 
 ### GET `/health`
 Health check endpoint.
 
 ```json
 {
-  "status": "healthy"
+  "status": "healthy",
+  "version": "1.1-ui"
 }
 ```
 
@@ -136,15 +163,18 @@ The application is deployed on AWS with:
 
 ## 🛠 Deployment
 
-This project can be deployed to AWS ECS:
+**Live on AWS ECS** - Automatically deployed via GitHub Actions:
 
-1. Build Docker image
-2. Push to Amazon ECR
-3. Create ECS task definition
-4. Deploy with load balancer
-5. Configure auto-scaling (optional)
+1. Push code to `main` branch
+2. GitHub Actions builds Docker image
+3. Image pushed to Amazon ECR
+4. ECS task definition updated
+5. 2 Fargate tasks deployed with load balancer
+6. Service stabilization verified
 
-For detailed deployment instructions, see deployment documentation.
+**Deployment Time:** ~2-3 minutes from push to live
+
+**Current Status:** ✅ Live at `http://fraud-api-alb-1872682528.us-east-1.elb.amazonaws.com/`
 
 ## 📈 Model Accuracy
 
@@ -158,9 +188,11 @@ For detailed deployment instructions, see deployment documentation.
 ## 🚦 Status
 
 ✅ Production Ready
-✅ Fully Tested
-✅ Deployed on AWS
-✅ High Availability Configured
+✅ Interactive UI Live
+✅ Deployed on AWS ECS
+✅ GitHub Actions CI/CD
+✅ 92.7% Model Accuracy
+✅ High Availability (2 tasks)
 
 ## 📝 Usage Example
 
