@@ -74,7 +74,7 @@ jobs:
         id: register-task-def
         run: |
           TASK_DEF=$(aws ecs register-task-definition \
-            --cli-input-json file://task-definition.json \
+            --cli-input-json file://${{ steps.task-def.outputs.task-definition }} \
             --query 'taskDefinition.revision' \
             --output text)
           echo "task-definition-revision=$TASK_DEF" >> $GITHUB_OUTPUT
