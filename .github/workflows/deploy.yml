@@ -51,25 +51,33 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Get task definition
+      - name: Get and update task definition
+        id: register-task
+        env:
+          IMAGE_URI: ${{ steps.image.outputs.image }}
         run: |
           aws ecs describe-task-definition \
             --task-definition $ECS_TASK_DEFINITION \
             --query 'taskDefinition' > task-def.json
 
-      - name: Update task definition with new image
-        id: task-def-update
-        uses: aws-actions/amazon-ecs-render-task-definition@v1
-        with:
-          task-definition: task-def.json
-          container-name: fraud-api
-          image: ${{ steps.image.outputs.image }}
+          python3 << 'EOF'
+          import json
+          import os
 
-      - name: Register new task definition
-        id: register-task
-        run: |
+          with open('task-def.json', 'r') as f:
+              task_def = json.load(f)
+
+          for field in ['taskDefinitionArn', 'revision', 'status', 'requiresAttributes', 'compatibilities', 'registeredAt', 'registeredBy']:
+              task_def.pop(field, None)
+
+          task_def['containerDefinitions'][0]['image'] = os.environ['IMAGE_URI']
+
+          with open('task-def-updated.json', 'w') as f:
+              json.dump(task_def, f)
+          EOF
+
           REVISION=$(aws ecs register-task-definition \
-            --cli-input-json file://${{ steps.task-def-update.outputs.task-definition }} \
+            --cli-input-json file://task-def-updated.json \
             --query 'taskDefinition.revision' \
             --output text)
           echo "revision=$REVISION" >> $GITHUB_OUTPUT
@@ -89,4 +97,4 @@ jobs:
             --services $ECS_SERVICE
 
       - name: Deployment complete
-        run: echo "✅ Deployment successful!"
+        run: echo "[SUCCESS] Deployment to ECS complete!"

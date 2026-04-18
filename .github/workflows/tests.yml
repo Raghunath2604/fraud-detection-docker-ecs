@@ -55,7 +55,7 @@ jobs:
             -H "Content-Type: application/json" \
             -d '{"amount": 2500, "time": 320, "location_risk": 1, "device_new": 1}' || exit 1
 
-          echo "✅ All endpoint tests passed!"
+          echo "[OK] All endpoint tests passed!"
 
       - name: Build Docker image
         run: docker build -t fraud-api:test .
@@ -72,7 +72,7 @@ jobs:
             -d '{"amount": 1000, "time": 10, "location_risk": 0, "device_new": 0}' || exit 1
 
           docker stop test-container
-          echo "✅ Docker container tests passed!"
+          echo "[OK] Docker container tests passed!"
 
   code-quality:
     runs-on: ubuntu-latest
@@ -85,7 +85,7 @@ jobs:
         run: |
           echo "Checking file sizes..."
           du -sh app/main.py model/fraud.pkl Dockerfile requirements.txt
-          echo "✅ File sizes OK"
+          echo "[OK] File sizes OK"
 
       - name: Verify .gitignore
         run: |
@@ -93,4 +93,4 @@ jobs:
           ! grep -r "AWS_ACCESS_KEY" . --exclude-dir=.git || exit 1
           ! grep -r "aws_secret_access_key" . --exclude-dir=.git || exit 1
           ! grep -r "\.pem" .gitignore || true
-          echo "✅ No sensitive data found"
+          echo "[OK] No sensitive data found"
