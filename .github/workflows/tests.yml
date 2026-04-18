@@ -90,7 +90,7 @@ jobs:
       - name: Verify .gitignore
         run: |
           echo "Checking for sensitive files..."
-          ! grep -r "AWS_ACCESS_KEY" . --exclude-dir=.git || exit 1
-          ! grep -r "aws_secret_access_key" . --exclude-dir=.git || exit 1
+          ! grep -r "AWS_ACCESS_KEY" . --exclude-dir=.git --exclude-dir=.github || exit 1
+          ! grep -r "aws_secret_access_key" . --exclude-dir=.git --exclude-dir=.github || exit 1
           ! grep -r "\.pem" .gitignore || true
           echo "[OK] No sensitive data found"
