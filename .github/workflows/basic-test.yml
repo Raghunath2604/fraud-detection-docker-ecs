@@ -1,0 +1,16 @@
+name: Test Workflow Execution
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  simple-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test Step
+        run: |
+          echo "GitHub Actions is receiving push events"
+          echo "Current time: $(date)"
+          echo "Push event detected successfully"
