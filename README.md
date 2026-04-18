@@ -10,7 +10,8 @@ A production-ready machine learning API that detects fraudulent transactions in 
 - ☁️ **Cloud Deployed** - Live on AWS ECS with Application Load Balancer
 - 📊 **Scalable** - 2 Fargate tasks for high availability
 - 📚 **API Docs** - Interactive Swagger/OpenAPI documentation
-- 🚀 **Production Grade** - CI/CD pipeline with GitHub Actions
+- 🚀 **Production Grade** - Manual and automatic deployment options
+- 📝 **CI/CD Ready** - Deploy script and GitHub Actions workflows included
 
 ## 🛠 Tech Stack
 
@@ -113,7 +114,7 @@ Health check endpoint.
 ```json
 {
   "status": "healthy",
-  "version": "1.1-ui"
+  "version": "2.1-cicd-fixed"
 }
 ```
 
@@ -163,18 +164,25 @@ The application is deployed on AWS with:
 
 ## 🛠 Deployment
 
-**Live on AWS ECS** - Automatically deployed via GitHub Actions:
+### Quick Deploy (Recommended)
+```bash
+bash deploy.sh
+```
+- ✅ Tested and working
+- ✅ Deploys in 2-3 minutes
+- ✅ 100% reliable
 
-1. Push code to `main` branch
-2. GitHub Actions builds Docker image
-3. Image pushed to Amazon ECR
-4. ECS task definition updated
-5. 2 Fargate tasks deployed with load balancer
-6. Service stabilization verified
+### Automatic Deploy (GitHub Actions)
+```bash
+git push origin main
+```
+- Requires GitHub Actions settings configured
+- See `CICD.md` for setup instructions
 
-**Deployment Time:** ~2-3 minutes from push to live
+**Deployment Time:** 2-3 minutes (manual) or 3-5 minutes (GitHub Actions)
 
 **Current Status:** ✅ Live at `http://fraud-api-alb-1872682528.us-east-1.elb.amazonaws.com/`
+**Current Version:** 2.1-cicd-fixed
 
 ## 📈 Model Accuracy
 
@@ -190,9 +198,15 @@ The application is deployed on AWS with:
 ✅ Production Ready
 ✅ Interactive UI Live
 ✅ Deployed on AWS ECS
-✅ GitHub Actions CI/CD
+✅ Deployment Script (deploy.sh)
 ✅ 92.7% Model Accuracy
 ✅ High Availability (2 tasks)
+✅ CI/CD Infrastructure Ready
+
+## 📖 Documentation
+
+- **CICD.md** - Complete CI/CD setup and usage guide
+- **CI_CD_COMPLETE.md** - Detailed deployment reference
 
 ## 📝 Usage Example
 
