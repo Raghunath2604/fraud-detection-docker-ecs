@@ -25,28 +25,30 @@ aws ecr get-login-password --region $AWS_REGION | \
 
 # Tag image
 ECR_REGISTRY=$(aws sts get-caller-identity --query Account --output text).dkr.ecr.$AWS_REGION.amazonaws.com
+BUILD_TAG=$(date +%Y%m%d-%H%M%S)
 docker tag fraud-api:latest $ECR_REGISTRY/$ECR_REPOSITORY:latest
-docker tag fraud-api:latest $ECR_REGISTRY/$ECR_REPOSITORY:$(date +%Y%m%d-%H%M%S)
+docker tag fraud-api:latest $ECR_REGISTRY/$ECR_REPOSITORY:$BUILD_TAG
 
 # Push to ECR
 echo "📤 Pushing to ECR..."
 docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-docker push $ECR_REGISTRY/$ECR_REPOSITORY:$(date +%Y%m%d-%H%M%S)
+docker push $ECR_REGISTRY/$ECR_REPOSITORY:$BUILD_TAG
 
 # Get current task definition
 echo "📋 Getting task definition..."
 aws ecs describe-task-definition \
   --task-definition $ECS_TASK_DEFINITION \
   --region $AWS_REGION \
-  --query 'taskDefinition' > /tmp/task-def.json
+  --query 'taskDefinition' > task-def.json
 
 # Update image in task definition
+echo "🔄 Updating task definition..."
+export ECR_REGISTRY
 python3 << 'EOF'
 import json
-import sys
+import os
 
-# Read task definition
-with open('/tmp/task-def.json', 'r') as f:
+with open('task-def.json', 'r') as f:
     task_def = json.load(f)
 
 # Remove non-editable fields
@@ -54,21 +56,20 @@ for field in ['taskDefinitionArn', 'revision', 'status', 'requiresAttributes',
               'compatibilities', 'registeredAt', 'registeredBy']:
     task_def.pop(field, None)
 
-# Update image
-ecr_registry = f"{sys.argv[1]}.dkr.ecr.us-east-1.amazonaws.com"
+# Update image to use latest
+ecr_registry = os.environ.get('ECR_REGISTRY', '')
 task_def['containerDefinitions'][0]['image'] = f"{ecr_registry}/fraud-api:latest"
 
-# Write updated task definition
-with open('/tmp/task-def-updated.json', 'w') as f:
+with open('task-def-updated.json', 'w') as f:
     json.dump(task_def, f)
 
-print("✓ Task definition updated")
+print("[OK] Task definition updated")
 EOF
 
 # Register new task definition
 echo "📝 Registering new task definition..."
 REVISION=$(aws ecs register-task-definition \
-  --cli-input-json file:///tmp/task-def-updated.json \
+  --cli-input-json file://task-def-updated.json \
   --region $AWS_REGION \
   --query 'taskDefinition.revision' \
   --output text)
@@ -85,7 +86,7 @@ aws ecs update-service \
   --region $AWS_REGION > /dev/null
 
 # Wait for deployment
-echo "⏳ Waiting for deployment to stabilize..."
+echo "⏳ Waiting for deployment to stabilize (this may take 2-3 minutes)..."
 aws ecs wait services-stable \
   --cluster $ECS_CLUSTER \
   --services $ECS_SERVICE \
@@ -94,3 +95,7 @@ aws ecs wait services-stable \
 echo ""
 echo "✅ Deployment complete!"
 echo "   API: http://fraud-api-alb-1872682528.us-east-1.elb.amazonaws.com/"
+echo ""
+
+# Cleanup
+rm -f task-def.json task-def-updated.json
