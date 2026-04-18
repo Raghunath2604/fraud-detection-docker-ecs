@@ -1,4 +1,0 @@
-GitHub Actions Test
----
-If this file triggers a workflow, GitHub Actions is working!
-Current timestamp: $(date)
