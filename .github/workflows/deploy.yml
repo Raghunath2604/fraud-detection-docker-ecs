@@ -1,4 +1,4 @@
-name: Build & Deploy to AWS ECS
+name: Deploy to ECS
 
 on:
   push:
@@ -13,35 +13,28 @@ env:
   ECS_TASK_DEFINITION: fraud-api
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-
     permissions:
       contents: read
       id-token: write
 
     steps:
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: Verify AWS Access
-        run: |
-          echo "🔐 AWS Credentials Check"
-          aws sts get-caller-identity
-          echo "✅ AWS authentication successful"
-
-      - name: Login to Amazon ECR
+      - name: Login to ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
       - name: Build Docker image
-        id: build-image
+        id: image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -50,7 +43,7 @@ jobs:
           docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
           echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
 
-      - name: Push image to Amazon ECR
+      - name: Push to ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: ${{ github.sha }}
@@ -58,52 +51,42 @@ jobs:
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
 
-      - name: Get current task definition
-        id: current-task-def
+      - name: Get task definition
         run: |
           aws ecs describe-task-definition \
             --task-definition $ECS_TASK_DEFINITION \
-            --query 'taskDefinition' > task-definition.json
+            --query 'taskDefinition' > task-def.json
 
-      - name: Update image in task definition
-        id: task-def
+      - name: Update task definition with new image
+        id: task-def-update
         uses: aws-actions/amazon-ecs-render-task-definition@v1
         with:
-          task-definition: task-definition.json
+          task-definition: task-def.json
           container-name: fraud-api
-          image: ${{ steps.build-image.outputs.image }}
+          image: ${{ steps.image.outputs.image }}
 
       - name: Register new task definition
-        id: register-task-def
+        id: register-task
         run: |
-          TASK_DEF=$(aws ecs register-task-definition \
-            --cli-input-json file://${{ steps.task-def.outputs.task-definition }} \
+          REVISION=$(aws ecs register-task-definition \
+            --cli-input-json file://${{ steps.task-def-update.outputs.task-definition }} \
             --query 'taskDefinition.revision' \
             --output text)
-          echo "task-definition-revision=$TASK_DEF" >> $GITHUB_OUTPUT
+          echo "revision=$REVISION" >> $GITHUB_OUTPUT
 
       - name: Deploy to ECS
         run: |
           aws ecs update-service \
             --cluster $ECS_CLUSTER \
             --service $ECS_SERVICE \
-            --task-definition $ECS_TASK_DEFINITION:${{ steps.register-task-def.outputs.task-definition-revision }} \
+            --task-definition $ECS_TASK_DEFINITION:${{ steps.register-task.outputs.revision }} \
             --force-new-deployment
 
-      - name: Wait for service to stabilize
+      - name: Wait for deployment
         run: |
           aws ecs wait services-stable \
             --cluster $ECS_CLUSTER \
             --services $ECS_SERVICE
 
-      - name: Deployment successful
-        run: echo "✅ Deployment to ECS completed successfully!"
-
-      - name: Post deployment status
-        if: always()
-        run: |
-          if [ ${{ job.status }} == 'success' ]; then
-            echo "🚀 Deployment Success - New image pushed and ECS updated"
-          else
-            echo "❌ Deployment Failed"
-          fi
+      - name: Deployment complete
+        run: echo "✅ Deployment successful!"
