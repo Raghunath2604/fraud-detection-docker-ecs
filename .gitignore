@@ -104,3 +104,5 @@ ACCESS_TOKEN
 *.crt
 *.cert
 *.pem
+task-def*.json
+td.json
