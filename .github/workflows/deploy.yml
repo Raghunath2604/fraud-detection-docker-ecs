@@ -32,9 +32,9 @@ jobs:
 
       - name: Verify AWS Access
         run: |
-          echo "Verifying AWS access..."
+          echo "🔐 AWS Credentials Check"
           aws sts get-caller-identity
-          echo "AWS access verified!"
+          echo "✅ AWS authentication successful"
 
       - name: Login to Amazon ECR
         id: login-ecr
